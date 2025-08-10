@@ -55,13 +55,15 @@ export function useSpeechRecognition() {
       setIsListening(false)
       
       if (event.error === 'not-allowed') {
-        alert('Microphone access was denied. Please allow microphone access and try again.')
+        console.log('Microphone access was denied. Please allow microphone access and try again.')
       } else if (event.error === 'no-speech') {
-        console.log('No speech detected')
+        console.log('No speech detected - this is normal, continuing...')
       } else if (event.error === 'audio-capture') {
-        alert('No microphone was found. Please ensure you have a microphone connected.')
+        console.log('No microphone was found. Please ensure you have a microphone connected.')
       } else if (event.error === 'network') {
-        alert('Network error occurred during speech recognition.')
+        console.log('Network error occurred during speech recognition. This is often temporary.')
+      } else {
+        console.log('Speech recognition error:', event.error)
       }
     }
 

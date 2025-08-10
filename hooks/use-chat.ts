@@ -44,7 +44,7 @@ export function useChat() {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      // Handle streaming response
+      // Handle streaming response from Vercel AI SDK
       const reader = response.body?.getReader()
       if (!reader) {
         throw new Error('No response body')
@@ -68,14 +68,35 @@ export function useChat() {
         if (done) break
         
         const chunk = decoder.decode(value, { stream: true })
-        assistantMessageContent += chunk
         
-        // Update the assistant message with accumulated content
-        setMessages(prev => prev.map(msg => 
-          msg.id === assistantMessage.id 
-            ? { ...msg, content: assistantMessageContent }
-            : msg
-        ))
+        // Parse Server-Sent Events format from Vercel AI SDK
+        const lines = chunk.split('\n')
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = line.slice(6) // Remove 'data: ' prefix
+              if (data === '[DONE]') continue
+              
+              const parsed = JSON.parse(data)
+              
+              // Handle text delta events
+              if (parsed.type === 'text-delta' && parsed.delta) {
+                assistantMessageContent += parsed.delta
+                
+                // Update the assistant message with accumulated content
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessage.id 
+                    ? { ...msg, content: assistantMessageContent }
+                    : msg
+                ))
+              }
+            } catch (parseError) {
+              // Skip malformed JSON lines
+              continue
+            }
+          }
+        }
       }
 
     } catch (error) {

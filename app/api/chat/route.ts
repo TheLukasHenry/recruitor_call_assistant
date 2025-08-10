@@ -183,8 +183,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use AI Gateway with fallback to direct OpenAI
-    const model = process.env.VERCEL_AI_GATEWAY_URL 
+    // Use AI Gateway only if both URL and API key are available, otherwise use direct OpenAI
+    const hasGatewayCredentials = process.env.VERCEL_AI_GATEWAY_URL && 
+      (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN)
+    
+    const model = hasGatewayCredentials
       ? gateway('openai/gpt-4.1') 
       : openai('gpt-4-turbo') // Fallback to direct OpenAI model
 
